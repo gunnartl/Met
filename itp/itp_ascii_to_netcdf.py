@@ -8,8 +8,11 @@ import getpass
 
 def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
     """
-    Function that reads in data from WHOI ITPs on ascii-format
-    Renames the varaibles to follow ACDD
+    Function that reads in all profiles from a WHOI-ITP from the directory in_path and dumps the data in a single
+    NETcdf-file out_file.
+    Renames the varaibles, and metadata to follow CF-1.8 standard
+    and adds discovermetadata to follow the ACDD-1.3 standard
+    min_length is set to 4 to not use very short profiles. 
     """
     
     files = sorted(glob.glob(in_path + "/*.dat"))[:40] #dont increase it will be craaaazy
@@ -266,7 +269,7 @@ def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
     buoy.attrs["Conventions"] = "ACDD-1.3, CF-1.8"
     buoy.attrs["history"] = [str(dt.datetime.now()),getpass.getuser(), "program name (itp_ascii2cf)",sys.argv[0]]
     buoy.attrs["date_created"] = str(dt.date.today())
-    buoy.attrs["creator_type"] = "Nan"
+    buoy.attrs["creator_type"] = "Institution"
     buoy.attrs["creator_institution"] = "Woods Hole Oceanographic Institute (WHOI)"
     buoy.attrs["creator_name"] = "Woods Hole Oceanographic Institution"
     buoy.attrs["creator_email"] = "information@whoi.edu" #?
