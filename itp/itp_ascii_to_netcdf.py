@@ -6,25 +6,36 @@ import datetime as dt
 import sys
 import getpass
 
-def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
+def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     """
     Function that reads in all profiles from a WHOI-ITP from the directory in_path and dumps the data in a single
-    NETcdf-file out_file.
+    NETcdf-file: out_file.
+    For new data from a ITP that is still active, existing_netcdf can be specified, and the new data will be added to this file.
+
     Renames the varaibles, and metadata to follow CF-1.8 standard
     and adds discovermetadata to follow the ACDD-1.3 standard
-    min_length is set to 4 to not use very short profiles. 
+
+    min_length is set to 4 to not use very short profiles. can be changed 
     """
-    
-    files = sorted(glob.glob(in_path + "/*.dat"))[:40] #dont increase it will be craaaazy
-    first = True
+
+    files = sorted(glob.glob(in_path + "/*.dat"))[40:50] #just 40 files to be able to test-run on crappy laptop
+    if existing_netcdf == None:
+        first = True
+        
+    else:
+        first = False
+        buoy  = xr.open_dataset(existing_netcdf,engine="netcdf4")
+        print("hepphepp")
+
     start = time.time()
     for i in files:
-
+        if (existing_netcdf!= None) and (int(i[-8:-4]) in buoy.profile.values): # checks that the given profile has not already been read
+            continue
 
         meta = pd.read_table(i,skiprows=None,sep="\s+",nrows=1,engine="python")
 
         if(meta.values[0,4]<min_length): # hopper over de korteste profilene
-            if i == files[-1] and "buoy" not in globals(): #sier ifra hvis netcdfen blir tom
+            if i == files[-1] and "buoy" not in locals(): #sier ifra hvis netcdfen blir tom
                 sys.exit("No profiles of desired lenght in directory")
             continue
 
@@ -43,6 +54,7 @@ def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
             df["times"] = pd.to_datetime(df["day"], unit = 'D', 
                                          origin = str(df["%year"][0]))
             df = df.drop(["%year","day"],axis=1)
+            df = df.drop(["times"],axis=1)
         if "nobs" in df.columns:
             df = df.drop("nobs",axis=1)
         if "nacm" in df.columns:
@@ -71,7 +83,6 @@ def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
         ds["latitude"]  = measurement_lat
         ds["longitude"]  = measurement_lon
 
-        #profile_nr = int(list(pd.read_table(i,sep="[:, ]",nrows=0,engine="python"))[4])
         profile_nr = int(str(meta.head().columns[3])[:-1])
 
 
@@ -85,7 +96,6 @@ def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
             first=False
         else:
             buoy=xr.concat([buoy,ds],dim = "profile")
-            #concat gjør at det blir mye nan i temp og salinity, men det følger cf. hør med Steingod
 
     
 
@@ -114,7 +124,7 @@ def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
         if i == "times": #behandler times for seg selv da dette er tidspunkt for individuelle målinger 
             continue
         buoy[i].attrs["standard_name"] = i
-        buoy[i].attrs["units"] = units[i]
+        buoy[i].attrs["unit"] = units[i]
 
     #global attributes
     project_names= {"1" : "Beaufort Gyre Observing System (BGOS)",
@@ -263,8 +273,8 @@ def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
     buoy.attrs["geospatial_lon_min"] = min(buoy.longitude.values)
     buoy.attrs["geospatial_lon_max"] = max(buoy.longitude.values)
 
-    buoy.attrs["time_coverage_start"] = min(buoy.time.values)
-    buoy.attrs["time_coverage_end"] = max(buoy.time.values)
+    buoy.attrs["time_coverage_start"] = str(min(buoy.time.values))
+    buoy.attrs["time_coverage_end"] = str(max(buoy.time.values))
 
     buoy.attrs["Conventions"] = "ACDD-1.3, CF-1.8"
     buoy.attrs["history"] = str([str(dt.datetime.now()),getpass.getuser(), "program name:",sys.argv])
@@ -278,8 +288,7 @@ def itp_ascii_to_netcdf(in_path, out_file,min_length=4):
     buoy.attrs["license"] = "Free"
     buoy.attrs["metadata_author"] = "Magnus Dyrmose Ryseth and Gunnar Thorsen Liahjell for MET Norway"
 
-
-    
+    buoy = buoy.sortby("profile")
     buoy.to_netcdf(out_file)
     print("Det tok", time.time()-start)
     return(0)
@@ -290,14 +299,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--inPath", help="Path to directory containing ITP .dat files")
     parser.add_argument("-o","--outFile", help="Filename fot the outputfile, with path")
+    parser.add_argument("-e","--existingFile",help="Filename of existing NETcdf,to be updated")
     args = parser.parse_args()
     
-    in_path  = args.inPath
-    out_file = args.outFile
-
     
     #path = "data/114"
-    itp_ascii_to_netcdf(in_path, out_file)
+    itp_ascii_to_netcdf(args.inPath,args.outFile,args.existingFile)
 
     
     
