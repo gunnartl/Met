@@ -15,10 +15,10 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     Renames the varaibles, and metadata to follow CF-1.8 standard
     and adds discovermetadata to follow the ACDD-1.3 standard
 
-    min_length is set to 4 to not use very short profiles. can be changed 
+    min_length is set to 4 to skip very short profiles. can be changed 
     """
 
-    files = sorted(glob.glob(in_path + "/*.dat")) #just 40 files to be able to test-run on crappy laptop
+    files = sorted(glob.glob(in_path + "/*.dat"))[40:50] #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
         first = True
         
@@ -49,13 +49,17 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
         measurement_lon  = float(meta.values[0,3])
 
 
-        if "%year" in df.columns:
-            df["%year"] = df["%year"].astype(int)
-            df["times"] = pd.to_datetime(df["day"], unit = 'D', 
-                                         origin = str(df["%year"][0]))
+        #f "%year" in df.columns:
+        #    df["%year"] = df["%year"].astype(int)
+        #    df["times"] = pd.to_datetime(df["day"], unit = 'D', origin = str(df["%year"][0]))
             #df.times = df.times.to_timestamp()
+        #    df = df.drop(["%year","day"],axis=1)
+        #    df = df.drop(["times"],axis=1)
+        if "%year" in df.columns:
+            df["times"] = 0.0
+            for i in range(len(df["%year"])):
+                df.times.values[i] = pd.to_datetime(float(df.day[i]),origin=str(int(df["%year"][i])),unit="D").timestamp()
             df = df.drop(["%year","day"],axis=1)
-            df = df.drop(["times"],axis=1)
         if "nobs" in df.columns:
             df = df.drop("nobs",axis=1)
         if "nacm" in df.columns:
