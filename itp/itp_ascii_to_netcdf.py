@@ -18,7 +18,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     min_length is set to 4 to not use very short profiles. can be changed 
     """
 
-    files = sorted(glob.glob(in_path + "/*.dat"))[40:50] #just 40 files to be able to test-run on crappy laptop
+    files = sorted(glob.glob(in_path + "/*.dat")) #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
         first = True
         
@@ -53,6 +53,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
             df["%year"] = df["%year"].astype(int)
             df["times"] = pd.to_datetime(df["day"], unit = 'D', 
                                          origin = str(df["%year"][0]))
+            #df.times = df.times.to_timestamp()
             df = df.drop(["%year","day"],axis=1)
             df = df.drop(["times"],axis=1)
         if "nobs" in df.columns:
@@ -277,7 +278,10 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     buoy.attrs["time_coverage_end"] = str(max(buoy.time.values))
 
     buoy.attrs["Conventions"] = "ACDD-1.3, CF-1.8"
-    buoy.attrs["history"] = str([str(dt.datetime.now()),getpass.getuser(), "program name:",sys.argv])
+    if existing_netcdf==None:
+        buoy.attrs["history"] = "{time}: user: {user}, program:{program}".format(time=dt.datetime.now(), user=getpass.getuser(), program=sys.argv)#str([str(dt.datetime.now()),getpass.getuser(), "program name:",sys.argv])
+    else:
+        buoy.attrs["history"] += "\n{time}: user: {user}, program:{program}".format(time=dt.datetime.now(), user=getpass.getuser(), program=sys.argv)
     buoy.attrs["date_created"] = str(dt.date.today())
     buoy.attrs["creator_type"] = "Institution"
     buoy.attrs["creator_institution"] = "Woods Hole Oceanographic Institute (WHOI)"
@@ -305,6 +309,15 @@ if __name__ == "__main__":
     
     #path = "data/114"
     itp_ascii_to_netcdf(args.inPath,args.outFile,args.existingFile)
+    print(sys.argv)
 
-    
-    
+
+
+    """
+    eksamle run for a new itp: 
+    gunnartl@Abel:~/Documents/met/itp (master)$ python3 itp_ascii_to_netcdf.py -i data/114 -o itp144.nc
+
+    eksample run for an already existing itp file that is to be updated with new data 
+    (data is here stored to the same file as the original, this is optional): 
+    gunnartl@Abel:~/Documents/met/itp (master)$ python3 itp_ascii_to_netcdf.py -i newdata/114 -o itp144.nc -e itp144.nc
+    """
