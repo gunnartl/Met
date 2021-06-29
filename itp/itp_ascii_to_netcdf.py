@@ -35,6 +35,8 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
     #start = time.time()
     for i in files:
         if (existing_netcdf!= None) and (int(i[-8:-4]) in buoy.profile.values): # checks that the given profile has not already been rea
+            if i == files[-1] and changes == False: #sier ifra hvis det ikke blir noen endringer i eksisterende fil
+                sys.exit("No new profiles in target directory. No changes made to {file}".format(file=existing_netcdf), )
             continue
 
         meta = pd.read_table(i,skiprows=None,sep="\s+",nrows=1,engine="python")
@@ -46,6 +48,9 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
                 if changes == False: #sier ifra hvis det ikke blir noen endringer i eksisterende fil
                     sys.exit("No new profiles, or no new profiles of desired lenght in target directory. No changes made to {file}".format(file=existing_netcdf), )
             continue
+
+        
+           
 
 
         df = pd.read_table(i,skiprows=2, delim_whitespace=True,skipfooter=1,engine="python")
