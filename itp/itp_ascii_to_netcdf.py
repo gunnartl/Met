@@ -18,7 +18,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     min_length is set to 4 to skip very short profiles. can be changed 
     """
 
-    files = sorted(glob.glob(in_path + "/*.dat"))[:40] #just 40 files to be able to test-run on crappy laptop
+    files = sorted(glob.glob(in_path + "/*.dat"))[:60] #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
         first = True
         
@@ -26,17 +26,21 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
         first = False
         buoy  = xr.open_dataset(existing_netcdf,engine="netcdf4")
         buoy.close()
+        changes = False
 
     start = time.time()
     for i in files:
-        if (existing_netcdf!= None) and (int(i[-8:-4]) in buoy.profile.values): # checks that the given profile has not already been read
+        if (existing_netcdf!= None) and (int(i[-8:-4]) in buoy.profile.values): # checks that the given profile has not already been rea
             continue
 
         meta = pd.read_table(i,skiprows=None,sep="\s+",nrows=1,engine="python")
 
         if(meta.values[0,4]<min_length): # hopper over de korteste profilene
-            if i == files[-1] and "buoy" not in locals(): #sier ifra hvis netcdfen blir tom
-                sys.exit("No profiles of desired lenght in directory")
+            if i == files[-1]:
+                if "buoy" not in locals(): #sier ifra hvis netcdfen blir tom
+                    sys.exit("No profiles of desired lenght in target directory")
+                if changes == False:
+                    sys.exit("No new profiles, or no new profiles of desired lenght in target directory. No changes made to {file}".format(file=existing_netcdf), )
             continue
 
 
@@ -94,6 +98,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
             first=False
         else:
             buoy=xr.concat([buoy,ds],dim = "profile")
+            changes = True
 
     
 
