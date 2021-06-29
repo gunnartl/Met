@@ -6,7 +6,7 @@ import datetime as dt
 import sys
 import getpass
 
-def itp_ascii_to_netcdf(in_path=None, out_file,existing_netcdf=None,min_length=4):
+def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_length=4):
     """
     Function that reads in all profiles from a WHOI-ITP from the directory in_path and dumps the data in a single
     NETcdf-file: out_file.
@@ -22,7 +22,7 @@ def itp_ascii_to_netcdf(in_path=None, out_file,existing_netcdf=None,min_length=4
     if out_file == None:
         sys.exit("Out-file name must be set")
 
-    files = sorted(glob.glob(in_path + "/*.dat"))[:60] #just 40 files to be able to test-run on crappy laptop
+    files = sorted(glob.glob(in_path + "/*.dat"))[:40] #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
         first = True
         
@@ -32,7 +32,7 @@ def itp_ascii_to_netcdf(in_path=None, out_file,existing_netcdf=None,min_length=4
         buoy.close() #lukker bare NETcdf-fila så man kan skrive til den etterpå
         changes = False
 
-    start = time.time()
+    #start = time.time()
     for i in files:
         if (existing_netcdf!= None) and (int(i[-8:-4]) in buoy.profile.values): # checks that the given profile has not already been rea
             continue
@@ -57,7 +57,7 @@ def itp_ascii_to_netcdf(in_path=None, out_file,existing_netcdf=None,min_length=4
         #removing useless columns nobs and nacm, and combines year and day to "times"
         if "%year" in df.columns:
             df["times"] = 0.0     #makes a new column to keep trak of individual measuremnt times, if included
-            for i in range(len(df["%year"])):
+            for i in range(len(df["%year"])): #dette går veldig treigt
                 df.times.values[i] = pd.to_datetime(float(df.day[i]),origin=str(int(df["%year"][i])),unit="D").timestamp()
             df = df.drop(["%year","day"],axis=1)
         if "nobs" in df.columns:
@@ -311,7 +311,7 @@ def itp_ascii_to_netcdf(in_path=None, out_file,existing_netcdf=None,min_length=4
 
     buoy = buoy.sortby("profile")
     buoy.to_netcdf(out_file)
-    print("Det tok", time.time()-start)
+    #print("Det tok", time.time()-start)
     return(0)
 
 
