@@ -1,7 +1,6 @@
 import pandas as pd 
 import glob
 import xarray as xr
-import time
 import datetime as dt
 import sys
 import getpass
@@ -22,7 +21,7 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
     if out_file == None:
         sys.exit("Out-file name must be set")
 
-    files = sorted(glob.glob(in_path + "/*.dat"))[:40] #just 40 files to be able to test-run on crappy laptop
+    files = sorted(glob.glob(in_path + "/*.dat"))[:60] #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
         first = True
         
@@ -32,9 +31,8 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
         buoy.close() #lukker bare NETcdf-fila så man kan skrive til den etterpå
         changes = False
 
-    #start = time.time()
     for i in files:
-        if (existing_netcdf!= None) and (int(i[-8:-4]) in buoy.profile.values): # checks that the given profile has not already been rea
+        if (existing_netcdf!= None) and (int(i[-8:-4]) in buoy.profile.values): # checks that the given profile has not already been read
             if i == files[-1] and changes == False: #sier ifra hvis det ikke blir noen endringer i eksisterende fil
                 sys.exit("No new profiles in target directory. No changes made to {file}".format(file=existing_netcdf), )
             continue
@@ -45,7 +43,7 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
             if i == files[-1]:
                 if "buoy" not in locals(): #sier ifra hvis netcdfen blir tom
                     sys.exit("No profiles of desired lenght in target directory")
-                if changes == False: #sier ifra hvis det ikke blir noen endringer i eksisterende fil
+                if changes == False: #sier ifra hvis det ikke blir noen endringer i eksisterende fil pga lengde
                     sys.exit("No new profiles, or no new profiles of desired lenght in target directory. No changes made to {file}".format(file=existing_netcdf), )
             continue
 
@@ -316,7 +314,6 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
 
     buoy = buoy.sortby("profile")
     buoy.to_netcdf(out_file)
-    #print("Det tok", time.time()-start)
     return(0)
 
 
@@ -329,7 +326,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     
-    #path = "data/114"
     itp_ascii_to_netcdf(args.inPath,args.outFile,args.existingFile)
 
 
