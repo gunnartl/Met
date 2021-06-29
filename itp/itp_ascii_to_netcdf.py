@@ -18,7 +18,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     min_length is set to 4 to skip very short profiles. can be changed 
     """
 
-    files = sorted(glob.glob(in_path + "/*.dat"))[:60] #just 40 files to be able to test-run on crappy laptop
+    files = sorted(glob.glob(in_path + "/*.dat"))[:40] #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
         first = True
         
@@ -128,6 +128,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     buoy["time"].attrs["long_name"] = "starting time for each profile"
 
     #global attributes
+    #list of affiliated projects to itp numbers
     project_names= {"1" : "Beaufort Gyre Observing System (BGOS)",
                     "2" : "Beaufort Gyre Freshwater Experiment (BGFE)",
                     "3" : "Beaufort Gyre Observing System (BGOS)",
@@ -247,25 +248,36 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
 
     buoy.attrs["title"] = ("Trajectory of profiles from WHOI-ITP " + itp_nr) #change a0 to the meta-indexing
     #summary for normal grd-files, Level 2
-    buoy.attrs["summary"] = ("""Trajectory of ITP (Ice-Tethered Profiler) profiles, that use pressure in dbar as vertical coordinate
-                             All profiles contain measurement times, temperature and salinity, and may include dissolved oxygen,
-                             chromophoric dissolved organic matter (CDOM), turbidity, mass concentration of chlorophyll,
-                             photosynthetically active radiation (PAR) and velocities. Metadata include time of initialization,
-                             coordinates and profile data points (ndepths).""")
-    #summary for final files, averaged
-    buoy.attrs["summary"] = ("""Trajectory of ITP (Ice-Tethered Profiler) profiles, that use pressure in dbar as vertical coordinate.
-                             All profiles contain averaged measurements of temperature and salinity, and may include dissolved oxygen,
-                             chromophoric dissolved organic matter (CDOM), turbidity, mass concentration of chlorophyll,
-                             photosynthetically active radiation (PAR) and velocities. Metadata include time of initialization,
-                             coordinates and profile data points (ndepths).""")
-    buoy.attrs["keywords"] = ["EARTH SCIENCE > OCEANS > SALINITY/DENSITY > DENSITY",
-                          "EARTH SCIENCE > OCEANS > OCEAN TEMPERATURE > WATER TEMPERATURE",
-                          "EARTH SCIENCE > OCEANS > SALINITY/DENSITY > SALINITY",
-                          "EARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > OXYGEN",
-                          "EARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > ORGANIC MATTER",
-                          "EARTH SCIENCE > OCEANS > OCEAN OPTICS > TURBIDITY",
-                          "EARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > CHLOROPHYLL",
-                          "EARTH SCIENCE > OCEANS > OCEAN CIRCULATION > ADVECTION"]
+
+
+    if "times" in df.columns:
+        buoy.attrs["summary"] = "Trajectory of ITP (Ice-Tethered Profiler) profiles, that use pressure in dbar as vertical coordinate "+ \
+                                "All profiles contain measurement times, temperature and salinity, and may include dissolved oxygen, "+ \
+                                "chromophoric dissolved organic matter (CDOM), turbidity, mass concentration of chlorophyll, " +\
+                                "photosynthetically active radiation (PAR) and velocities. Metadata include time of initialization, "+ \
+                                "coordinates and profile data points (ndepths)."
+    else: #summary for final files, averaged
+        buoy.attrs["summary"] = "Trajectory of ITP (Ice-Tethered Profiler) profiles, that use pressure in dbar as vertical coordinate. "+\
+                                "All profiles contain averaged measurements of temperature and salinity, and may include dissolved oxygen ,"+\
+                                "chromophoric dissolved organic matter (CDOM), turbidity, mass concentration of chlorophyll, "+\
+                                "photosynthetically active radiation (PAR) and velocities. Metadata include time of initialization, "+\
+                                "coordinates and profile data points (ndepths)."
+    buoy.attrs["keywords"] = "EARTH SCIENCE > OCEANS > SALINITY/DENSITY > DENSITY,\n"+\
+                             "EARTH SCIENCE > OCEANS > OCEAN TEMPERATURE > WATER TEMPERATURE,\n"+\
+                             "EARTH SCIENCE > OCEANS > SALINITY/DENSITY > SALINITY,"
+
+    if "moles_of_oxygen_per_unit_mass_in_sea_water" in df.columns:
+        buoy.attrs["keywords"] += "\nEARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > OXYGEN,"
+    if "mass_concentration_of_chlorophyll_a_in_sea_water" in df.columns:
+        buoy.attrs["keywords"] += "\nEARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > CHLOROPHYLL,"
+    if "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate" in df.columns:
+        buoy.attrs["keywords"] += "\nEARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > CHLOROPHYLL,"
+    if "sea_water_turbidity" in df.columns:
+        buoy.attrs["keywords"] += "\nEARTH SCIENCE > OCEANS > OCEAN OPTICS > TURBIDITY,"
+    if "eastward_sea_water_velocity" in df.columns:
+        buoy.attrs["keywords"] += "\nEARTH SCIENCE > OCEANS > OCEAN CIRCULATION > ADVECTION,"
+
+    buoy.attrs["keywords"] = buoy.attrs["keywords"][:-1] #bare fjerner siste komma
     buoy.attrs["keywords_vocabulary"] = "GCMD"
     buoy.attrs["featureType"] = "trajectoryProfile"
 
