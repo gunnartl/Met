@@ -18,14 +18,14 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     min_length is set to 4 to skip very short profiles. can be changed 
     """
 
-    files = sorted(glob.glob(in_path + "/*.dat"))[40:50] #just 40 files to be able to test-run on crappy laptop
+    files = sorted(glob.glob(in_path + "/*.dat"))[:60] #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
         first = True
         
     else:
         first = False
         buoy  = xr.open_dataset(existing_netcdf,engine="netcdf4")
-        print("hepphepp")
+        buoy.close()
 
     start = time.time()
     for i in files:
@@ -48,15 +48,8 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
         measurement_lat  = float(meta.values[0,2])
         measurement_lon  = float(meta.values[0,3])
 
-
-        #f "%year" in df.columns:
-        #    df["%year"] = df["%year"].astype(int)
-        #    df["times"] = pd.to_datetime(df["day"], unit = 'D', origin = str(df["%year"][0]))
-            #df.times = df.times.to_timestamp()
-        #    df = df.drop(["%year","day"],axis=1)
-        #    df = df.drop(["times"],axis=1)
         if "%year" in df.columns:
-            df["times"] = 0.0
+            df["times"] = 0.0     #makes a new column to keep trak of individual measuremnt times, if included
             for i in range(len(df["%year"])):
                 df.times.values[i] = pd.to_datetime(float(df.day[i]),origin=str(int(df["%year"][i])),unit="D").timestamp()
             df = df.drop(["%year","day"],axis=1)
@@ -127,9 +120,12 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     #søksmetadata
     for i in buoy:
         if i == "times": #behandler times for seg selv da dette er tidspunkt for individuelle målinger 
+            buoy[i].attrs["long_name"] = "individual time for each measurement in a profile"
+            buoy[i].attrs["unit"] = units["time"]
             continue
         buoy[i].attrs["standard_name"] = i
         buoy[i].attrs["unit"] = units[i]
+    buoy["time"].attrs["long_name"] = "starting time for each profile"
 
     #global attributes
     project_names= {"1" : "Beaufort Gyre Observing System (BGOS)",
@@ -313,7 +309,6 @@ if __name__ == "__main__":
     
     #path = "data/114"
     itp_ascii_to_netcdf(args.inPath,args.outFile,args.existingFile)
-    print(sys.argv)
 
 
 
