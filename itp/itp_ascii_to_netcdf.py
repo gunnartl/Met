@@ -6,7 +6,7 @@ import datetime as dt
 import sys
 import getpass
 
-def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
+def itp_ascii_to_netcdf(in_path=None, out_file,existing_netcdf=None,min_length=4):
     """
     Function that reads in all profiles from a WHOI-ITP from the directory in_path and dumps the data in a single
     NETcdf-file: out_file.
@@ -17,6 +17,10 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
 
     min_length is set to 4 to skip very short profiles. can be changed 
     """
+    if in_path == None:
+        sys.exit("In-path to ipt-.dat files must be set")
+    if out_file == None:
+        sys.exit("Out-file name must be set")
 
     files = sorted(glob.glob(in_path + "/*.dat"))[:60] #just 40 files to be able to test-run on crappy laptop
     if existing_netcdf == None:
