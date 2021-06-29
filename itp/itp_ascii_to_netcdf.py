@@ -254,10 +254,9 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
                   }
     itp_nr = str(meta.head().columns[1][:-1])
 
-    buoy.attrs["title"] = ("Trajectory of profiles from WHOI-ITP " + itp_nr) #change a0 to the meta-indexing
+    buoy.attrs["title"] = ("Trajectory of profiles from WHOI-ITP " + itp_nr)
+    
     #summary for normal grd-files, Level 2
-
-
     if "times" in df.columns:
         buoy.attrs["summary"] = "Trajectory of ITP (Ice-Tethered Profiler) profiles, that use pressure in dbar as vertical coordinate "+ \
                                 "All profiles contain measurement times, temperature and salinity, and may include dissolved oxygen, "+ \
@@ -286,6 +285,7 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
         buoy.attrs["keywords"] += "\nEARTH SCIENCE > OCEANS > OCEAN CIRCULATION > ADVECTION,"
 
     buoy.attrs["keywords"] = buoy.attrs["keywords"][:-1] #bare fjerner siste komma
+    
     buoy.attrs["keywords_vocabulary"] = "GCMD"
     buoy.attrs["featureType"] = "trajectoryProfile"
 
@@ -325,8 +325,8 @@ if __name__ == "__main__":
     parser.add_argument("-e","--existingFile",help="Filename of existing NETcdf,to be updated")
     args = parser.parse_args()
     
-    
     itp_ascii_to_netcdf(args.inPath,args.outFile,args.existingFile)
+
 
 
 
