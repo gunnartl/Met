@@ -25,7 +25,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
     else:
         first = False
         buoy  = xr.open_dataset(existing_netcdf,engine="netcdf4")
-        buoy.close()
+        buoy.close() #lukker bare NETcdf-fila så man kan skrive til den etterpå
         changes = False
 
     start = time.time()
@@ -76,6 +76,8 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
                            "north(cm/s)":"northward_sea_water_velocity",
                            "vert(cm/s)":"upward_sea_water_velocity"
                            }, inplace=True)
+        
+        #setter trykket som koordinat
         df = df.set_index("sea_water_pressure")
 
         ds = xr.Dataset.from_dataframe(df)
@@ -86,8 +88,8 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
 
         profile_nr = int(str(meta.head().columns[3])[:-1])
 
-
-        ds = ds.assign_coords(profile=profile_nr)
+        #setter profil som koordinat
+        ds = ds.assign_coords(profile=profile_nr) 
         ds = ds.expand_dims("profile")
 
 
@@ -99,11 +101,6 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
             buoy=xr.concat([buoy,ds],dim = "profile")
             changes = True
 
-    
-
-
-    #La oss fikse litt metadata da
-    #legg til alle de her greiene: https://adc.met.no/node/4
     #lager metadata:
     units = {"time":"Seconds since 1970-01-01 00:00:00+0",
              "latitude":"degree_north",
