@@ -39,12 +39,10 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
             if i == files[-1]:
                 if "buoy" not in locals(): #sier ifra hvis netcdfen blir tom
                     sys.exit("No profiles of desired lenght in target directory")
-                if changes == False:
+                if changes == False: #sier ifra hvis det ikke blir noen endringer i eksisterende fil
                     sys.exit("No new profiles, or no new profiles of desired lenght in target directory. No changes made to {file}".format(file=existing_netcdf), )
             continue
 
-
-        #print(df.values.shape[0], int(str(meta.head().columns[3])[:-1]))
 
         df = pd.read_table(i,skiprows=2, delim_whitespace=True,skipfooter=1,engine="python")
 
@@ -52,6 +50,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
         measurement_lat  = float(meta.values[0,2])
         measurement_lon  = float(meta.values[0,3])
 
+        #removing useless columns nobs and nacm, and combines year and day to "times"
         if "%year" in df.columns:
             df["times"] = 0.0     #makes a new column to keep trak of individual measuremnt times, if included
             for i in range(len(df["%year"])):
@@ -62,7 +61,7 @@ def itp_ascii_to_netcdf(in_path, out_file,existing_netcdf=None,min_length=4):
         if "nacm" in df.columns:
             df = df.drop("nacm",axis=1)
 
-
+        #standard names: 
         df.rename(columns={"%pressure(dbar)":"sea_water_pressure",
                            "pressure(dbar)":"sea_water_pressure",
                            "temperature(C)":"sea_water_temperature",
