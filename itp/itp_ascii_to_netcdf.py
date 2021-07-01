@@ -299,9 +299,9 @@ def itp_ascii_to_netcdf(in_path=None, out_file=None,existing_netcdf=None,min_len
 
     buoy.attrs["Conventions"] = "ACDD-1.3, CF-1.8"
     if existing_netcdf==None:
-        buoy.attrs["history"] = "{time}: user: {user}, program:{program}".format(time=dt.datetime.now(), user=getpass.getuser(), program=sys.argv)#str([str(dt.datetime.now()),getpass.getuser(), "program name:",sys.argv])
+        buoy.attrs["history"] = "{time}: user: {user}, program:{program}".format(time=dt.datetime.now(), user=getpass.getuser(), program=sys.argv, "asciifiles converted to NETcdf")
     else:
-        buoy.attrs["history"] += "\n{time}: user: {user}, program:{program}".format(time=dt.datetime.now(), user=getpass.getuser(), program=sys.argv)
+        buoy.attrs["history"] += "\n{time}: user: {user}, program:{program}".format(time=dt.datetime.now(), user=getpass.getuser(), program=sys.argv, "updated with more data")
     buoy.attrs["date_created"] = str(dt.date.today())
     buoy.attrs["creator_type"] = "Institution"
     buoy.attrs["creator_institution"] = "Woods Hole Oceanographic Institute (WHOI)"
